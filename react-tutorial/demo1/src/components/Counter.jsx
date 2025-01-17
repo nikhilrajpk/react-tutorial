@@ -1,10 +1,12 @@
 import React from 'react'
 
-export function Counter({handle}) {
+function Counter({handleCount}) {
   return (
     <>
-        <button onClick={()=> handle(true)}>+</button> {"  "}
-        <button onClick={()=> handle(false)}>-</button>
+      <button onClick={()=>handleCount(true)}>+</button>
+      <button onClick={()=>handleCount(false)}>-</button>
     </>
   )
 }
+
+export default React.memo(Counter)

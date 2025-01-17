@@ -1,50 +1,111 @@
-import { useState } from 'react'
-
-import './App.css'
-import {Counter} from './components/Counter'
-import InputBox from './components/InputBox';
-
-
+import React, { useEffect, useState } from 'react'
+import Counter from './components/Counter'
+import { useUserApi } from './hooks/useUserApi'
+import Form from './components/Form'
+import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider } from 'react-router-dom'
+import Layout from './components/Layout'
+import about from './components/about'
 function App() {
-  
-  // counter
-  const [count, setCount] = useState(0);
-  const handleCount = (isIncrement)=>{
-    setCount((prev)=> isIncrement ? prev+1 : prev-1)
+  const [count, setCount] = useState(0)
+  const handleCount = (isIncrement) =>{
+    setCount((prev)=> isIncrement ? prev + 1 : prev - 1)
   }
+  const {data:userData, loading, error} = useUserApi(count)
 
-  // input box
-  const [userData, setUserData] = useState({
-    username : "", 
-    email : "",
-    password : ""
+  const [tasks, setTasks] = useState(()=>{
+    const savedTasks = localStorage.getItem('todo')
+    return savedTasks ? JSON.parse(savedTasks) : []
   })
-  const handleData = (e) =>{
-    const {name, value} = e.target;
-    setUserData((data)=>({
-      ...data,
-      [name] : value
-    }))
-  }
-  const [showPass, setShowPass] = useState(false)
+  useEffect(()=>{
+    localStorage.setItem('todo', JSON.stringify(tasks))
+  },[tasks])
 
+  const [task, setTask] = useState("")
+  const addTask = ()=>{
+    if(task.trim()==="") return;
+    const timestamp = new Date().toLocaleString()
+    setTasks([...tasks, {text : task, completed:false, time:timestamp}])
+    setTask("")
+  }
+  const toggleTask = (index) =>{
+    const newTasks = [...tasks]
+    newTasks[index].completed = !newTasks[index].completed;
+    setTasks(newTasks)
+  }
+  const deleteTask = (index) =>{
+    const newTasks = tasks.filter((_,i) => i !== index)
+    setTasks(newTasks)
+  }
+
+  //form
+  const [user, setUser] = useState(
+    {
+      username : "",
+      email : "",
+      password : ""
+    }
+  )
+  const [showpass, setShowpass] = useState(false)
+  const handleUser = (e) =>{
+    const {name, value} = e.target
+    setUser({
+      ...user,
+      [name] : value
+    })
+  }
+
+  const [show, setShow] = useState(true)
+
+  
   return (
     <>
-      <h1>Count ; {count}</h1>
-      < Counter handle={handleCount} />
-      {/* input */}
-      <p>username:{userData.username}</p>
-      <p>email:{userData.email}</p>
-      <p>password:{userData.password}</p>
-
-      < InputBox type={'text'} name={'username'} placeholder={'enter you username'} handleData={handleData} /> {"  "}
-      < InputBox type={'email'} name={'email'} placeholder={'enter you email'} handleData={handleData} /> {"  "}
-      < InputBox type={showPass ? 'text' : 'password'}
-         name={'password'} placeholder={'enter you password'} handleData={handleData} />
-
-      <button onClick={()=>setShowPass((prev) => !prev)}>
-        {showPass ? "Hide" : "show"}
-      </button>
+      <button onClick={()=>setShow(!show)}>toggle</button>
+      {show && <Form/>}
+      {/* <p>{user.username}</p>
+      <p>{user.email}</p>
+      <p>{user.password}</p>
+      < Form type={'text'} name={'username'} handleUser={handleUser} />
+      < Form type={'email'} name={'email'} handleUser={handleUser} />
+      < Form type={showpass ? 'text':'password'} name={'password'} handleUser={handleUser} />
+      <button onClick={()=> setShowpass((prev)=>!prev)} >
+        {showpass ? "Hide" : "show"}
+      </button> */}
+      <h1>count : {count}</h1>
+      < Counter handleCount={handleCount} />
+      {
+        loading ? (
+          <div style={{backgroundColor:'yellow'}}>
+            <p>Loading....</p>
+          </div>
+        ) : error ? (
+            <div style={{backgroundColor:'red'}}>
+              <p>{error}</p>
+            </div>
+        ) : (
+          <div style={{backgroundColor:'blue'}}>
+            <p>{userData.name}</p>
+            <p>{userData.email}</p>
+          </div>
+        )
+      }
+      <div>
+        <input type="text" value={task} onChange={(e)=> setTask(e.target.value)} />
+        <button onClick={addTask}>Add</button>
+      </div>
+      <div>
+        {
+          tasks.map((task, index) => (
+            <li key={index}>
+            <input type="checkbox" checked={task.completed} onChange={() => toggleTask(index)} />
+            <p
+              style={task.completed ? {textDecorationLine:'line-through'} : {textDecorationLine:'underline'}}
+            >{task.text}</p>
+            <p style={{color:'blue'}}>{task.time}</p>
+            <button onClick={()=>deleteTask(index)}>delete</button>
+            </li>
+          ))
+        }
+      </div>
     </>
   )
 }
