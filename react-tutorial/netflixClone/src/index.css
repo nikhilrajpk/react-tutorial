@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .clip-custom-curve {
+    clip-path: path('M0 50 C150 0 350 100 500 50 L500 100 L0 100 Z');
+  }
+}
